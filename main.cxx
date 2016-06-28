@@ -17,9 +17,7 @@ void propagate_and_draw_from_source(source& s, int no, std::vector<plane> planeV
 
 		static std::random_device rd;	
 		static std::default_random_engine generator(rd());
-
 		static std::uniform_int_distribution<int> colDist(0,rgbTriplets.size()-1);
-
 
 		for(int i = 0; i < no; i++) {
 			auto tr1 = s.getTrack();
@@ -32,15 +30,17 @@ void propagate_and_draw_from_source(source& s, int no, std::vector<plane> planeV
 			cairo_set_line_width (pageOne, 0.1);
 			cairo_set_line_width (pageTwo, 0.1);
 
-			cairo_arc(pageOne, tr1.posZ, 40-tr1.posX, 0.5, 0, 2 * 3.142);
+			cairo_arc(pageOne, tr1.currPos.z, 40-tr1.currPos.x, 0.5, 0, 2 * 3.142);
 			cairo_stroke_preserve(pageOne);
+			
+		//	while(tr1.propagate2next()){
+			for(auto& hit: tr1.hits) {
 
-			while(tr1.propagate()){
-				cairo_arc(pageOne, tr1.posZ, 40-tr1.posX, 0.5, 0, 2 * 3.142);
-				cairo_arc(pageTwo, tr1.posZ, 40-tr1.posX, 0.5, 0, 2 * 3.142);
+				cairo_arc(pageOne, tr1.currPos.z, 40-tr1.currPos.x, 0.5, 0, 2 * 3.142);
+				cairo_arc(pageTwo, tr1.currPos.z, 40-tr1.currPos.x, 0.5, 0, 2 * 3.142);
 				cairo_stroke_preserve(pageOne);
 				cairo_stroke(pageTwo);
-			}
+		//	}
 			cairo_stroke(pageOne);
 		}
 }
@@ -49,14 +49,10 @@ void propagate_and_draw_from_source(source& s, int no, std::vector<plane> planeV
 int main() {
 
 		cairoObject painter("file2.pdf", 240, 80);
+		painter.addPage(2);
 
-        cairo_surface_t* pdfSurface = cairo_pdf_surface_create ("outFile.pdf", 240, 80);
-        cairo_surface_t* pageOneS = cairo_surface_create_similar( pdfSurface, cairo_surface_get_content(pdfSurface), 240, 80);
-        cairo_surface_t* pageTwoS = cairo_surface_create_similar( pdfSurface, cairo_surface_get_content(pdfSurface), 240, 80);
-
-        cairo_t* pdf = cairo_create (pdfSurface);
-        cairo_t* pageOne = cairo_create(pageOneS);
-        cairo_t* pageTwo = cairo_create(pageTwoS);
+		cairo_t* pageOne = painter.getContext(0);
+		cairo_t* pageTwo = painter.getContext(1);
 
 		std::vector<plane> planeVec;
 
@@ -82,8 +78,8 @@ int main() {
 
 		for(int i = 1; i <= 10; i++) {
 			plane pl;
-			pl.posZ = 20*i;
-			pl.posX = distribution(generator)*0.2;
+			pl.pos.z = 20*i;
+			pl.pos.x = distribution(generator)*0.2;
 			pl.angle = distribution(generator);
 			pl.size = 40;
 			pl.radLen = 0;
@@ -97,8 +93,8 @@ int main() {
 		cairo_set_line_width (pageTwo, 0.2);
 
 		for(auto& pl: planeVec) {
-			float xOrig = pl.posX;
-			float zOrig = pl.posZ;
+			float xOrig = pl.pos.x;
+			float zOrig = pl.pos.z;
 			float angle = pl.angle*PI/180;
 
 			float deltaX = pl.size*std::cos(angle)/2.0;
@@ -117,26 +113,10 @@ int main() {
 		source s1(7.0, 0.0, df1, df2);
 		source s2(-7.0, 0.0, df1, df2);
 
-
 		propagate_and_draw_from_source(s1, 7, planeVec, pageOne, pageTwo);
 		propagate_and_draw_from_source(s2, 7, planeVec, pageOne, pageTwo);
 
-		cairo_set_source_surface(pdf, pageOneS, 0.0, 0.0);
-		cairo_paint(pdf);
-		cairo_show_page(pdf);
-
-		cairo_set_source_surface(pdf, pageTwoS, 0.0, 0.0);
-		cairo_paint(pdf);
-		cairo_show_page(pdf);
-
- 
-		cairo_destroy (pageOne);
-        cairo_destroy (pageTwo);
-		cairo_destroy (pdf);
-
-        cairo_surface_destroy (pageOneS);
-        cairo_surface_destroy (pageTwoS);
-        cairo_surface_destroy (pdfSurface);
+		painter.draw();
 
 	return 1;
 
