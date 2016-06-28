@@ -103,7 +103,7 @@ class track {
 				return false;
 			}
 		
-			angle = angle+nextPlane->angleDist.getRandomNumber();
+			//angle = angle+nextPlane->angleDist.getRandomNumber();
 			nextPlane++;
 			return true;
 		} else {
