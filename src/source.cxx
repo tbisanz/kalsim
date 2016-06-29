@@ -1,9 +1,4 @@
-#include "objects.h"
-#include <iostream>
-
-trID track::internalID = 0;
-
-track::track(): trackID(track::internalID++),fullyPropagated(false), allPlaneHit(false) {}
+#include "source.h"
 
 track source::getTrack(){
 	track tr;

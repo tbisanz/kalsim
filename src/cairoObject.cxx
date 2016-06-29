@@ -1,7 +1,7 @@
 #include "cairoObject.h"
 
 cairoObject::cairoObject(std::string filename, int x, int y): x(x), y(y){
-	mainSurface = cairo_pdf_surface_create(filename.c_str(), 240, 80);
+	mainSurface = cairo_pdf_surface_create(filename.c_str(), x, y);
 	mainContext = cairo_create(mainSurface);
 }
 
